@@ -1,0 +1,11 @@
+/* Global resets are handled by MUI CssBaseline + theme tokens. */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Numeric inputs: keep tabular alignment in timesheet grids. */
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}

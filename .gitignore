@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+frontend/dist/
+*.log
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Private attachment storage — never commit uploaded files
+media/
+backend/test_media/
+db.sqlite3
+
+# Editors
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.*
+.git/
+__pycache__/
+*.pyc
+.venv/
+venv/
+media/
+db.sqlite3
+test_media/
+coverage/
+.specify/
+specs/

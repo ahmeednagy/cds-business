@@ -1,0 +1,83 @@
+name: cds-business
+
+# Local development stack — `docker compose up --build` from the repo root.
+# Dev parity only; the production-style nginx/gunicorn stack lives in deploy/.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wasl}
+      POSTGRES_USER: ${POSTGRES_USER:-wasl}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wasl_dev_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-wasl} -d $${POSTGRES_DB:-wasl}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.backend.dev
+    # Migrations are safe to auto-run; seed_demo stays explicit on purpose.
+    command: ["sh", "-c", "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-secret-key-for-local-docker}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      DB_ENGINE: django.db.backends.postgresql
+      DB_NAME: ${POSTGRES_DB:-wasl}
+      DB_USER: ${POSTGRES_USER:-wasl}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-wasl_dev_password}
+      DB_HOST: db
+      DB_PORT: "5432"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Source mount → Django dev auto-reload; media dir preserves private attachments.
+      - ./backend:/app/backend
+      - ./media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend.dev
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    environment:
+      # Inside Compose, /api must proxy to the backend service name — never localhost.
+      VITE_API_PROXY_TARGET: http://backend:8000
+      # inotify doesn't propagate reliably through bind mounts on Docker Desktop.
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:4
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -1,0 +1,16 @@
+Django>=5.1,<7
+djangorestframework>=3.15
+djangorestframework-simplejwt>=5.4
+django-filter>=24.3
+psycopg[binary]>=3.2
+gunicorn>=22.0
+channels>=4.2,<5
+daphne>=4.2,<5
+pytest>=8.3
+pytest-django>=4.9
+factory-boy>=3.3
+# Report exports: Excel workbooks, branded PDFs and correct Arabic shaping.
+openpyxl>=3.1
+reportlab>=4.0
+arabic-reshaper>=3.0
+python-bidi>=0.4.2
