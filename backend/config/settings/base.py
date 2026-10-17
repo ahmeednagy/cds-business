@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
+    "corsheaders",
     "apps.core",
     "apps.accounts",
     "apps.workflows",
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -79,16 +81,51 @@ TEMPLATES = [
     }
 ]
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.environ.get("DB_NAME", BASE_DIR / "db.sqlite3"),
-        "USER": os.environ.get("DB_USER", ""),
-        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-        "HOST": os.environ.get("DB_HOST", ""),
-        "PORT": os.environ.get("DB_PORT", ""),
+# Cross-origin controls — empty by default (same-origin APIs need no CORS).
+# Set in production, e.g. CORS_ALLOWED_ORIGINS=https://app.example.com
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+    if o.strip()
+]
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+
+# DATABASE_URL takes precedence when set (Render/Neon style
+# postgresql://user:pass@host/db?sslmode=require); otherwise the DB_*
+# variables below keep the local Docker Postgres / sqlite defaults working.
+_database_url = os.environ.get("DATABASE_URL", "").strip()
+if _database_url:
+    import dj_database_url
+
+    DATABASES = {
+        "default": dj_database_url.parse(
+            _database_url, conn_max_age=600, conn_health_checks=True
+        )
     }
-}
+    # Managed Postgres (Neon et al.) requires SSL; don't force it for
+    # localhost-style URLs that deliberately omit sslmode.
+    _is_remote = not any(
+        h in _database_url for h in ("localhost", "127.0.0.1", "@db:", "@db/")
+    )
+    if _is_remote and "sslmode" not in _database_url:
+        DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = "require"
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.sqlite3"),
+            "NAME": os.environ.get("DB_NAME", BASE_DIR / "db.sqlite3"),
+            "USER": os.environ.get("DB_USER", ""),
+            "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+            "HOST": os.environ.get("DB_HOST", ""),
+            "PORT": os.environ.get("DB_PORT", ""),
+        }
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 

@@ -1,0 +1,31 @@
+# Render blueprint — CDS Business backend on Render + Neon PostgreSQL.
+# Secret values are NEVER stored here — they are entered in the Render
+# dashboard as sync:false env vars.
+services:
+  - type: web
+    name: cds-business-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false          # paste the Neon connection string here
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false          # e.g. cds-business-api.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false          # e.g. https://<frontend-host>
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false          # e.g. https://<frontend-host>
+      - key: FRONTEND_URL
+        sync: false          # used in password-reset email links
+      # Optional — required only when running the ASGI/chat service:
+      # - key: CHANNEL_LAYER_BACKEND
+      #   value: channels_redis.core.RedisChannelLayer
+      # - key: CHANNEL_LAYER_REDIS_URL
+      #   sync: false
