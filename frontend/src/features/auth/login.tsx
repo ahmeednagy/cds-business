@@ -9,6 +9,7 @@ import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControlLabel,
   InputAdornment,
   Link,
@@ -77,21 +78,39 @@ export default function LoginPage() {
 
   const fieldSx = {
     "& .MuiOutlinedInput-root": {
-      borderRadius: 1.75,
-      minHeight: 54,
+      borderRadius: 1.5,
+      minHeight: 56,
       transition: "box-shadow 0.15s",
       "& .MuiOutlinedInput-notchedOutline": {
-        borderColor: alpha(theme.palette.text.primary, 0.14),
+        borderColor: theme.palette.divider,
+      },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: alpha(theme.palette.text.primary, 0.32),
       },
       "&.Mui-focused": {
         boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
       },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: theme.palette.primary.main,
+        borderWidth: 1,
+      },
     },
     "& .MuiOutlinedInput-input": { fontSize: "1rem" },
+    // Chrome autofill paints a yellow inset shadow — repaint it with the
+    // theme surface/text colors so filled credentials keep the design.
+    "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus":
+      {
+        WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.paper} inset`,
+        WebkitTextFillColor: theme.palette.text.primary,
+        caretColor: theme.palette.text.primary,
+        borderRadius: "inherit",
+        transition: "background-color 9999s ease-out",
+      },
     "& .MuiInputAdornment-root .MuiSvgIcon-root": {
       color: "text.secondary",
       fontSize: "1.25rem",
     },
+    "& .MuiFormHelperText-root": { mx: 0.5, mt: 0.75 },
   };
 
   const FieldLabel = ({ text, htmlFor }: { text: string; htmlFor: string }) => (
@@ -99,7 +118,7 @@ export default function LoginPage() {
       component="label"
       htmlFor={htmlFor}
       variant="body2"
-      sx={{ display: "block", mb: 0.75, color: "text.secondary", fontWeight: 500 }}
+      sx={{ display: "block", mb: 1, color: "text.primary", fontWeight: 500 }}
     >
       {text}
       <Box component="span" sx={{ color: "primary.main" }}>
@@ -115,8 +134,8 @@ export default function LoginPage() {
         component="h1"
         fontWeight={800}
         sx={{
-          letterSpacing: isRtl ? 0 : "-0.015em",
-          fontSize: { xs: "2rem", md: "2.4rem" },
+          letterSpacing: isRtl ? 0 : "-0.02em",
+          fontSize: { xs: "1.9rem", md: "2.125rem" },
           lineHeight: 1.1,
           color: "text.primary",
         }}
@@ -125,12 +144,12 @@ export default function LoginPage() {
       </Typography>
       <Typography
         color="text.secondary"
-        sx={{ mt: 1.25, mb: 4, fontSize: "1.05rem" }}
+        sx={{ mt: 1.25, mb: 4.5, fontSize: "1rem" }}
       >
         {t("auth.signInSubtitle")}
       </Typography>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Stack spacing={2.25}>
+        <Stack spacing={2.5}>
           <Box>
             <FieldLabel text={t("auth.email")} htmlFor="email" />
             <TextField
@@ -228,6 +247,11 @@ export default function LoginPage() {
             size="large"
             fullWidth
             disabled={isSubmitting}
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
             endIcon={
               !isSubmitting ? (
                 <ArrowForwardOutlinedIcon
@@ -240,10 +264,23 @@ export default function LoginPage() {
             }
             sx={{
               minHeight: 56,
-              borderRadius: 1.75,
+              borderRadius: 1.5,
               fontSize: "1.05rem",
               fontWeight: 700,
-              boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.22)}`,
+              boxShadow: `0 8px 22px ${alpha(theme.palette.primary.main, 0.28)}`,
+              transition:
+                "box-shadow 0.15s, transform 0.15s, background-color 0.15s",
+              "&:hover": {
+                boxShadow: `0 10px 26px ${alpha(theme.palette.primary.main, 0.34)}`,
+              },
+              "&:active": {
+                transform: "translateY(1px)",
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.28)}`,
+              },
+              "&.Mui-disabled": {
+                bgcolor: alpha(theme.palette.primary.main, 0.55),
+                color: "#FFFFFF",
+              },
             }}
           >
             {isSubmitting ? t("auth.signingIn") : t("auth.signIn")}

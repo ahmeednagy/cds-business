@@ -17,11 +17,13 @@ const FEATURES = [
 ];
 
 /**
- * Original login composition: a CDS-red promotional panel (~52%) on the
- * left — white-chipped logo, "Empowering People." / "Simplifying Work.",
- * description, feature rows with icon circles and the workspace photo in
- * the lower-right, clipped by the curved seam — and a light login panel
- * on the right with the language/theme controls above the form.
+ * Login composition: a CDS-red promotional panel (~52%) on the left —
+ * white-chipped logo top-left, "Empowering People." / "Simplifying Work."
+ * headline and tagline vertically centered, feature rows with icon
+ * circles anchored at the bottom, all over abstract dot/ring/geometric
+ * decorations — and a light login panel on the right with the
+ * language/theme controls above the form. A small curve clipped from
+ * the hero's top corner is the only seam decoration.
  */
 export default function AuthShell({ children }: { children: ReactNode }) {
   const { t, i18n } = useTranslation();
@@ -53,6 +55,10 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           color: "#FFFFFF",
           background:
             "linear-gradient(155deg, #ED2329 0%, #E31E24 42%, #C0151B 78%, #9E1116 100%)",
+          // Small decorative curve at the top of the seam only — clipped
+          // from the hero itself so the panel below never overlaps or
+          // clips the laptop artwork near the bottom.
+          borderStartEndRadius: { xs: 0, md: 56 },
         }}
       >
         {/* Decorative circles + dot texture */}
@@ -92,6 +98,58 @@ export default function AuthShell({ children }: { children: ReactNode }) {
             bgcolor: alpha("#000000", 0.06),
           }}
         />
+        {/* Lower-area abstract shapes — fill the space where the artwork
+            used to sit: a large thin ring bleeding off the end edge and a
+            rotated rounded square echoing the right panel's decoration. */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: "-16%",
+            insetInlineEnd: "-8%",
+            width: { md: 460, lg: 540 },
+            height: { md: 460, lg: 540 },
+            borderRadius: "50%",
+            border: "52px solid",
+            borderColor: alpha("#FFFFFF", 0.055),
+            pointerEvents: "none",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: "6%",
+            insetInlineEnd: "26%",
+            width: 170,
+            height: 170,
+            borderRadius: "42px",
+            border: "22px solid",
+            borderColor: alpha("#FFFFFF", 0.05),
+            transform: "rotate(24deg)",
+            pointerEvents: "none",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: "24%",
+            insetInlineEnd: "12%",
+            width: 76,
+            height: 76,
+            borderRadius: "50%",
+            bgcolor: alpha("#FFFFFF", 0.08),
+            pointerEvents: "none",
+          }}
+        />
+        {/* Soft glow under the feature rows */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "radial-gradient(circle at 74% 92%, rgba(255,255,255,0.07) 0%, transparent 48%)",
+          }}
+        />
 
         {/* Logo inside the white rounded container */}
         <Box
@@ -109,13 +167,18 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           <LogoLockup height={40} />
         </Box>
 
-        {/* Text column — controlled width so copy wraps like the ref */}
+        {/* Headline block — vertically centered in the space between the
+            logo (top) and the feature rows (bottom) */}
         <Box
           sx={{
             position: "relative",
             zIndex: 2,
-            mt: { md: 4, lg: 5.5 },
-            maxWidth: 410,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            maxWidth: 440,
+            py: { md: 3, lg: 4 },
           }}
         >
           <Typography
@@ -154,81 +217,50 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           >
             {t("auth.brand.tagline")}
           </Typography>
-
-          {/* Feature rows — icon circle + two-line label */}
-          <Stack spacing={{ md: 2.5, lg: 3 }} sx={{ mt: { md: 4, lg: 5 } }}>
-            {FEATURES.map(({ key, icon }) => (
-              <Box
-                key={key}
-                sx={{ display: "flex", alignItems: "center", gap: 2 }}
-              >
-                <Box
-                  sx={{
-                    width: { md: 48, lg: 54 },
-                    height: { md: 48, lg: 54 },
-                    flexShrink: 0,
-                    borderRadius: "50%",
-                    bgcolor: alpha("#6E0C10", 0.55),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    "& .MuiSvgIcon-root": {
-                      fontSize: { md: "1.35rem", lg: "1.55rem" },
-                    },
-                  }}
-                >
-                  {icon}
-                </Box>
-                <Typography
-                  sx={{
-                    fontSize: { md: "0.98rem", lg: "1.05rem" },
-                    fontWeight: 600,
-                    lineHeight: 1.35,
-                    whiteSpace: "pre-line",
-                    // Feature text must end before the laptop artwork
-                    // begins — otherwise label tails peek through its
-                    // feathered left edge.
-                    maxWidth: 245,
-                  }}
-                >
-                  {t(key)}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
         </Box>
 
-        {/* Workspace photo — lower-right, edges feathered into the red */}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: -8,
-            insetInlineEnd: "-6%",
-            width: "52%",
-            pointerEvents: "none",
-            zIndex: 1,
-            maskImage: isRtl
-              ? "linear-gradient(to bottom, transparent 0%, black 18%), linear-gradient(to right, black 74%, transparent 100%)"
-              : "linear-gradient(to bottom, transparent 0%, black 18%), linear-gradient(to left, black 74%, transparent 100%)",
-            maskComposite: "intersect",
-            WebkitMaskImage: isRtl
-              ? "linear-gradient(to bottom, transparent 0%, black 18%), linear-gradient(to right, black 74%, transparent 100%)"
-              : "linear-gradient(to bottom, transparent 0%, black 18%), linear-gradient(to left, black 74%, transparent 100%)",
-            WebkitMaskComposite: "source-in",
-          }}
+        {/* Feature rows — icon circle + two-line label, anchored to the
+            bottom of the hero */}
+        <Stack
+          spacing={{ md: 3, lg: 3.5 }}
+          sx={{ position: "relative", zIndex: 2, pb: { md: 1, lg: 2 } }}
         >
-          <Box
-            component="img"
-            src="/login-workspace.png"
-            alt=""
-            sx={{
-              display: "block",
-              width: "100%",
-              height: "auto",
-              transform: isRtl ? "scaleX(-1)" : "none",
-            }}
-          />
-        </Box>
+          {FEATURES.map(({ key, icon }) => (
+            <Box
+              key={key}
+              sx={{ display: "flex", alignItems: "center", gap: 2 }}
+            >
+              <Box
+                sx={{
+                  width: { md: 48, lg: 54 },
+                  height: { md: 48, lg: 54 },
+                  flexShrink: 0,
+                  borderRadius: "50%",
+                  bgcolor: alpha("#6E0C10", 0.55),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  "& .MuiSvgIcon-root": {
+                    fontSize: { md: "1.35rem", lg: "1.55rem" },
+                  },
+                }}
+              >
+                {icon}
+              </Box>
+              <Typography
+                sx={{
+                  fontSize: { md: "0.98rem", lg: "1.05rem" },
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                  whiteSpace: "pre-line",
+                  maxWidth: 320,
+                }}
+              >
+                {t(key)}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
       </Box>
 
       {/* ---------- Right: login panel ---------- */}
@@ -240,11 +272,27 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           position: "relative",
           overflow: "hidden",
           bgcolor: "background.default",
-          // The curved seam — the light panel's corner meeting the red
-          // panel (start side in both LTR and RTL).
-          borderStartStartRadius: { xs: 0, md: 84 },
         }}
       >
+        {/* Soft seam shadow — depth cue fading into the panel, never
+            touches the hero or the laptop. */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            insetInlineStart: 0,
+            width: 28,
+            pointerEvents: "none",
+            display: { xs: "none", md: "block" },
+            background: `linear-gradient(${
+              isRtl ? "to left" : "to right"
+            }, ${alpha(
+              theme.palette.mode === "dark" ? "#000000" : "#4A4D52",
+              theme.palette.mode === "dark" ? 0.25 : 0.05,
+            )} 0%, transparent 100%)`,
+          }}
+        />
         {/* Faint geometric decoration */}
         <Box
           sx={{
@@ -268,18 +316,6 @@ export default function AuthShell({ children }: { children: ReactNode }) {
               borderColor: "currentColor",
               borderRadius: "60px",
               transform: "rotate(24deg)",
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: "8%",
-              insetInlineStart: "-80px",
-              width: 240,
-              height: 240,
-              border: "22px solid",
-              borderColor: "currentColor",
-              borderRadius: "50%",
             }}
           />
         </Box>
@@ -309,7 +345,20 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           <Box sx={{ display: { xs: "none", md: "block" } }} />
           <Stack direction="row" spacing={1.25} alignItems="center">
             <LanguageSegmented />
-            <ThemeToggle />
+            <ThemeToggle
+              sx={{
+                width: 38,
+                height: 38,
+                color: "text.secondary",
+                border: 1,
+                borderColor: "divider",
+                "&:hover": {
+                  color: "text.primary",
+                  bgcolor: "action.hover",
+                },
+                "& .MuiSvgIcon-root": { fontSize: "1.2rem" },
+              }}
+            />
           </Stack>
         </Box>
 
@@ -353,7 +402,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
             zIndex: 1,
           }}
         >
-          <Box sx={{ width: "100%", maxWidth: { xs: "100%", sm: 420 } }}>
+          <Box sx={{ width: "100%", maxWidth: { xs: "100%", sm: 460 } }}>
             {children}
           </Box>
         </Box>

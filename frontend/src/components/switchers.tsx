@@ -7,6 +7,8 @@ import {
   Menu,
   MenuItem,
   Tooltip,
+  type SxProps,
+  type Theme,
 } from "@mui/material";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
@@ -15,7 +17,7 @@ import TranslateIcon from "@mui/icons-material/Translate";
 import { useThemeMode } from "../theme";
 import { SUPPORTED_LANGUAGES, type AppLanguage } from "../i18n";
 
-export function ThemeToggle() {
+export function ThemeToggle({ sx }: { sx?: SxProps<Theme> }) {
   const { mode, toggleMode } = useThemeMode();
   const { t } = useTranslation();
   return (
@@ -28,6 +30,7 @@ export function ThemeToggle() {
         aria-label={t(
           mode === "light" ? "theme.switchToDark" : "theme.switchToLight",
         )}
+        sx={sx}
       >
         {mode === "light" ? (
           <DarkModeOutlinedIcon />
@@ -50,7 +53,8 @@ export function LanguageSegmented() {
         display: "inline-flex",
         alignItems: "center",
         gap: 0.25,
-        p: 0.4,
+        height: 38,
+        px: 0.4,
         borderRadius: 999,
         border: 1,
         borderColor: "divider",
@@ -65,8 +69,8 @@ export function LanguageSegmented() {
             onClick={() => void i18n.changeLanguage(lng)}
             aria-pressed={active}
             sx={{
-              px: 1.9,
-              py: 0.55,
+              px: 1.75,
+              py: 0.5,
               borderRadius: 999,
               fontSize: "0.85rem",
               fontWeight: 700,
@@ -75,6 +79,10 @@ export function LanguageSegmented() {
               bgcolor: active ? "background.paper" : "transparent",
               boxShadow: active ? 1 : "none",
               transition: "background-color 0.15s, color 0.15s",
+              "&:hover": {
+                color: active ? "primary.main" : "text.primary",
+                bgcolor: active ? "background.paper" : "action.selected",
+              },
             }}
           >
             {t(`language.short.${lng}`)}
