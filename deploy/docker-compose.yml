@@ -24,6 +24,9 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.prod
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY}
       DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      # Demo quick-login stays off in prod ("auto" follows DEBUG=False);
+      # set DJANGO_DEMO_QUICK_LOGIN=1 in the server env to enable it.
+      DJANGO_DEMO_QUICK_LOGIN: ${DJANGO_DEMO_QUICK_LOGIN:-auto}
       DB_ENGINE: django.db.backends.postgresql
       DB_NAME: ${POSTGRES_DB:-wasl}
       DB_USER: ${POSTGRES_USER:-wasl}
