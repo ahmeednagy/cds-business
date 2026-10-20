@@ -10,9 +10,15 @@ import { ApiError } from "../src/lib/api";
 import { AppThemeProvider } from "../src/theme";
 
 const loginMock = vi.fn();
+const quickLoginMock = vi.fn();
 
 vi.mock("../src/lib/auth", () => ({
-  useAuth: () => ({ user: null, loading: false, login: loginMock }),
+  useAuth: () => ({
+    user: null,
+    loading: false,
+    login: loginMock,
+    quickLogin: quickLoginMock,
+  }),
 }));
 
 function renderLogin() {
@@ -43,9 +49,22 @@ async function fillAndSubmit(remember = true) {
   return user;
 }
 
+function stubQuickLogin(accounts: string[] | null) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      accounts === null
+        ? new Response("{}", { status: 404 })
+        : new Response(JSON.stringify({ accounts }), { status: 200 }),
+    ),
+  );
+}
+
 describe("login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    stubQuickLogin(null);
     localStorage.clear();
   });
 
@@ -134,5 +153,79 @@ describe("login", () => {
     expect(
       await screen.findByText(/cannot reach the server/i),
     ).toBeInTheDocument();
+  });
+});
+
+describe("quick login", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("renders the persona cards the backend advertises", async () => {
+    stubQuickLogin(["ahmed", "manager", "hr"]);
+    renderLogin();
+    expect(
+      await screen.findByText(/or quick login as/i),
+    ).toBeInTheDocument();
+    for (const name of ["Ahmed", "Manager", "HR"]) {
+      expect(
+        screen.getByRole("button", { name: new RegExp(`login as ${name}`, "i") }),
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("logs in via a persona and navigates to the app", async () => {
+    stubQuickLogin(["ahmed", "manager", "hr"]);
+    quickLoginMock.mockResolvedValue(undefined);
+    renderLogin();
+    const card = await screen.findByRole("button", {
+      name: /login as manager/i,
+    });
+    await userEvent.setup().click(card);
+    await waitFor(() =>
+      expect(quickLoginMock).toHaveBeenCalledWith("manager"),
+    );
+    expect(await screen.findByTestId("home")).toBeInTheDocument();
+  });
+
+  it("shows the shared error state when quick login fails", async () => {
+    stubQuickLogin(["ahmed", "manager", "hr"]);
+    quickLoginMock.mockRejectedValue(
+      new ApiError(404, "not_found", "Not found."),
+    );
+    renderLogin();
+    const card = await screen.findByRole("button", {
+      name: /login as ahmed/i,
+    });
+    await userEvent.setup().click(card);
+    expect(
+      await screen.findByText(/not found or you don't have access/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders nothing when the endpoint is unavailable", async () => {
+    stubQuickLogin(null);
+    renderLogin();
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(screen.queryByText(/or quick login as/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /login as/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides personas the backend does not list", async () => {
+    stubQuickLogin(["manager"]);
+    renderLogin();
+    expect(
+      await screen.findByRole("button", { name: /login as manager/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /login as ahmed/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /login as hr/i }),
+    ).not.toBeInTheDocument();
   });
 });

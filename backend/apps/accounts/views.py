@@ -10,6 +10,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -69,6 +70,55 @@ class LoginView(APIView):
                 {"error": {"code": "unauthenticated", "message": "Invalid credentials."}},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+        refresh = RefreshToken.for_user(user)
+        response = Response({"access": str(refresh.access_token)})
+        return _set_refresh_cookie(response, refresh)
+
+
+def _quick_login_enabled():
+    """"auto" follows DEBUG — on for dev/test-safe local runs, off in prod."""
+    value = str(getattr(settings, "DEMO_QUICK_LOGIN", "auto")).lower()
+    if value == "auto":
+        return settings.DEBUG
+    return value in ("1", "true", "yes", "on")
+
+
+def _quick_login_accounts():
+    """Whitelisted demo personas that actually exist and are active."""
+    emails = getattr(settings, "DEMO_QUICK_LOGIN_ACCOUNTS", {})
+    active = set(
+        User.objects.filter(email__in=emails.values(), is_active=True)
+        .values_list("email", flat=True)
+    )
+    return {key: email for key, email in emails.items() if email in active}
+
+
+class QuickLoginView(APIView):
+    """Demo-only passwordless sign-in for whitelisted personas. The backend
+    maps a short key to a seeded demo account and issues the identical JWT
+    pair + refresh cookie as LoginView — no password crosses the wire.
+    Everything 404s unless the environment opts in (DEMO_QUICK_LOGIN)."""
+
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "login"
+
+    def _require_enabled(self):
+        if not _quick_login_enabled():
+            raise NotFound
+
+    def get(self, request):
+        """Advertise which personas are available so the frontend can hide
+        the quick-login UI entirely when the feature is off."""
+        self._require_enabled()
+        return Response({"accounts": sorted(_quick_login_accounts())})
+
+    def post(self, request):
+        self._require_enabled()
+        email = _quick_login_accounts().get(request.data.get("key", ""))
+        if email is None:
+            raise NotFound
+        user = User.objects.get(email=email)
         refresh = RefreshToken.for_user(user)
         response = Response({"access": str(refresh.access_token)})
         return _set_refresh_cookie(response, refresh)

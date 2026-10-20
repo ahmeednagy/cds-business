@@ -29,6 +29,7 @@ import { useAuth } from "../../lib/auth";
 import { isRtlLanguage } from "../../i18n";
 import AuthShell from "../../components/AuthShell";
 import PasswordField from "../../components/PasswordField";
+import QuickLogin from "./quick-login";
 import { ErrorAlert } from "../../components/ui";
 
 const schema = z.object({
@@ -42,10 +43,11 @@ export default function LoginPage() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const isRtl = isRtlLanguage(i18n.language);
-  const { user, loading, login } = useAuth();
+  const { user, loading, login, quickLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [serverError, setServerError] = useState<unknown>(null);
+  const [quickPending, setQuickPending] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -72,6 +74,21 @@ export default function LoginPage() {
       setServerError(e);
     }
   };
+
+  const onQuickLogin = async (key: string) => {
+    setServerError(null);
+    setQuickPending(key);
+    try {
+      await quickLogin(key);
+      navigate("/", { replace: true });
+    } catch (e) {
+      setServerError(e);
+    } finally {
+      setQuickPending(null);
+    }
+  };
+
+  const authBusy = isSubmitting || quickPending !== null;
 
   const isInvalidCredentials =
     serverError instanceof ApiError && serverError.status === 401;
@@ -246,7 +263,7 @@ export default function LoginPage() {
             variant="contained"
             size="large"
             fullWidth
-            disabled={isSubmitting}
+            disabled={authBusy}
             startIcon={
               isSubmitting ? (
                 <CircularProgress size={20} color="inherit" />
@@ -287,6 +304,11 @@ export default function LoginPage() {
           </Button>
         </Stack>
       </form>
+      <QuickLogin
+        onSelect={onQuickLogin}
+        pendingKey={quickPending}
+        disabled={authBusy}
+      />
     </AuthShell>
   );
 }

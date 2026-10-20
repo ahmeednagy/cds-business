@@ -6,11 +6,13 @@ from .views import (
     LogoutView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
+    QuickLoginView,
     RefreshView,
 )
 
 urlpatterns = [
     path("login/", LoginView.as_view(), name="auth-login"),
+    path("quick-login/", QuickLoginView.as_view(), name="auth-quick-login"),
     path("refresh/", RefreshView.as_view(), name="auth-refresh"),
     path("logout/", LogoutView.as_view(), name="auth-logout"),
     path("change-password/", ChangePasswordView.as_view(), name="auth-change-password"),

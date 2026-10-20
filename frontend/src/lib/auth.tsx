@@ -16,6 +16,7 @@ interface AuthState {
   user: Me | null;
   loading: boolean;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  quickLogin: (key: string, remember?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -61,17 +62,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, [refreshUser]);
 
+  const acceptSession = useCallback(
+    async (access: string, remember: boolean) => {
+      localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
+      setAccessToken(access);
+      await refreshUser();
+    },
+    [refreshUser],
+  );
+
   const login = useCallback(
     async (email: string, password: string, remember = true) => {
       const { access } = await post<{ access: string }>("/api/auth/login/", {
         email,
         password,
       });
-      localStorage.setItem(REMEMBER_KEY, remember ? "1" : "0");
-      setAccessToken(access);
-      await refreshUser();
+      await acceptSession(access, remember);
     },
-    [refreshUser],
+    [acceptSession],
+  );
+
+  const quickLogin = useCallback(
+    async (key: string, remember = true) => {
+      // Passwordless demo sign-in — the backend maps the key to a
+      // whitelisted account and returns the same session as a login.
+      const { access } = await post<{ access: string }>(
+        "/api/auth/quick-login/",
+        { key },
+      );
+      await acceptSession(access, remember);
+    },
+    [acceptSession],
   );
 
   const logout = useCallback(async () => {
@@ -86,8 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, loading, login, logout, refreshUser }),
-    [user, loading, login, logout, refreshUser],
+    () => ({ user, loading, login, quickLogin, logout, refreshUser }),
+    [user, loading, login, quickLogin, logout, refreshUser],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

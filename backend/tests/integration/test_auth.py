@@ -112,3 +112,63 @@ def test_change_password_enforces_strength(api_client):
         {"current_password": "Test!Passw0rd", "new_password": "short"},
     )
     assert response.status_code == 400
+
+
+# ---------- Demo quick login ----------
+
+QUICK_LOGIN_ACCOUNTS = {
+    "ahmed": "ahmed.nagy@cdsbussiness.com",
+    "manager": "ramadan.khalil@cdsbussiness.com",
+    "hr": "shrouk.youssry@cdsbussiness.com",
+}
+
+
+@pytest.fixture
+def quick_login(settings):
+    settings.DEMO_QUICK_LOGIN = "1"
+    settings.DEMO_QUICK_LOGIN_ACCOUNTS = QUICK_LOGIN_ACCOUNTS
+    return settings
+
+
+def test_quick_login_disabled_by_default_in_non_debug(api_client):
+    assert api_client.get("/api/auth/quick-login/").status_code == 404
+    assert (
+        api_client.post("/api/auth/quick-login/", {"key": "ahmed"}).status_code
+        == 404
+    )
+
+
+def test_quick_login_lists_only_existing_active_accounts(
+    api_client, quick_login
+):
+    UserFactory(email=QUICK_LOGIN_ACCOUNTS["ahmed"])
+    UserFactory(email=QUICK_LOGIN_ACCOUNTS["manager"], is_active=False)
+    response = api_client.get("/api/auth/quick-login/")
+    assert response.status_code == 200
+    assert response.data["accounts"] == ["ahmed"]
+
+
+def test_quick_login_issues_same_session_as_login(api_client, quick_login):
+    user = UserFactory(email=QUICK_LOGIN_ACCOUNTS["hr"])
+    response = api_client.post("/api/auth/quick-login/", {"key": "hr"})
+    assert response.status_code == 200
+    assert response.data["access"]
+    assert settings.REFRESH_COOKIE_NAME in response.cookies
+    # The issued access token authenticates exactly like a normal login.
+    api_client.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {response.data['access']}"
+    )
+    me = api_client.get("/api/me/")
+    assert me.status_code == 200
+    assert me.data["email"] == user.email
+
+
+def test_quick_login_unknown_key_404(api_client, quick_login):
+    response = api_client.post("/api/auth/quick-login/", {"key": "ghost"})
+    assert response.status_code == 404
+
+
+def test_quick_login_missing_or_inactive_user_404(api_client, quick_login):
+    UserFactory(email=QUICK_LOGIN_ACCOUNTS["ahmed"], is_active=False)
+    response = api_client.post("/api/auth/quick-login/", {"key": "ahmed"})
+    assert response.status_code == 404

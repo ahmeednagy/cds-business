@@ -203,6 +203,18 @@ REFRESH_COOKIE_KWARGS = {
     "path": "/api/auth/",
 }
 
+# Demo quick-login — local dev/demo environments only. POST
+# /api/auth/quick-login/ issues a normal JWT session for a whitelisted demo
+# persona without a password; the map holds emails only (no secrets here).
+# "auto" follows DEBUG (on for dev, off for prod); force with
+# DJANGO_DEMO_QUICK_LOGIN=1 or =0. Never enable in production.
+DEMO_QUICK_LOGIN = os.environ.get("DJANGO_DEMO_QUICK_LOGIN", "auto")
+DEMO_QUICK_LOGIN_ACCOUNTS = {
+    "ahmed": "ahmed.nagy@cdsbussiness.com",
+    "manager": "ramadan.khalil@cdsbussiness.com",
+    "hr": "shrouk.youssry@cdsbussiness.com",
+}
+
 ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024
 ATTACHMENT_ALLOWED_CONTENT_TYPES = {
     "application/pdf",

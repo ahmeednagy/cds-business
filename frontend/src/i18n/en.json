@@ -150,7 +150,14 @@
       "script2": "Together"
     },
     "emailPlaceholder": "Enter your email address",
-    "passwordPlaceholder": "Enter your password"
+    "passwordPlaceholder": "Enter your password",
+    "quickLogin": {
+      "divider": "Or quick login as",
+      "loginAs": "Login as",
+      "ahmed": "Ahmed",
+      "manager": "Manager",
+      "hr": "HR"
+    }
   },
   "theme": {
     "label": "Theme",

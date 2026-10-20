@@ -146,7 +146,14 @@
       "script2": "معًا"
     },
     "emailPlaceholder": "أدخل بريدك الإلكتروني",
-    "passwordPlaceholder": "أدخل كلمة المرور"
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "quickLogin": {
+      "divider": "أو سجّل الدخول بسرعة كـ",
+      "loginAs": "الدخول كـ",
+      "ahmed": "أحمد",
+      "manager": "المدير",
+      "hr": "الموارد البشرية"
+    }
   },
   "theme": {
     "label": "المظهر",
